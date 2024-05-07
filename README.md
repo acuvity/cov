@@ -26,8 +26,8 @@ file (usually using `go test -coverprofile=coverage.out`) then add a new step:
     jobs:
       build:
         steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-go@v3
+        - uses: actions/checkout@v4
+        - uses: actions/setup-go@v5
         - name: test
           run: go test -coverprofile=coverage.out ./...
         - uses: acuvity/cov@1.0.0

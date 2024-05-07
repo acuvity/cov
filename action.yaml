@@ -84,7 +84,7 @@ runs:
           -t ${{inputs.cov_threshold}} \
           ${{inputs.cov_file}}
 
-  - uses: actions/upload-artifact@v3
+  - uses: actions/upload-artifact@v4
     if: inputs.cov_mode == 'coverage'
     with:
       name: cov.report
@@ -93,10 +93,10 @@ runs:
   ### upload report as status check
   - name: download-report
     if: inputs.cov_mode == 'send-status'
-    uses: actions/github-script@v3.1.0
+    uses: actions/github-script@v7
     with:
       script: |
-        var artifacts = await github.actions.listWorkflowRunArtifacts({
+        var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
            owner: context.repo.owner,
            repo: context.repo.repo,
            run_id: ${{inputs.workflow_run_id}},
@@ -104,7 +104,7 @@ runs:
         var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
           return artifact.name == "cov.report"
         })[0];
-        var download = await github.actions.downloadArtifact({
+        var download = await github.rest.actions.downloadArtifact({
            owner: context.repo.owner,
            repo: context.repo.repo,
            artifact_id: matchArtifact.id,
