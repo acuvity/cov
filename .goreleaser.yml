@@ -1,0 +1,26 @@
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^test:'
+    - '^examples:'
+builds:
+  - id: cov
+    main: .
+    binary: cov
+    goos:
+    - linux
+    - freebsd
+    - darwin
+    goarch:
+    - amd64
+    env:
+    - CGO_ENABLED=0
+
+archives:
+  - id: cov
+    format: binary
+    builds:
+    - cov
