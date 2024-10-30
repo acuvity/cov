@@ -93,8 +93,8 @@ runs:
   - uses: actions/upload-artifact@v4
     if: inputs.cov_mode == 'coverage'
     with:
-      name: ${{inputs.report}}
-      path: ${{inputs.report}}
+      name: ${{inputs.cov_report}}
+      path: ${{inputs.cov_report}}
 
   ### upload report as status check
   - name: download-report
@@ -117,7 +117,7 @@ runs:
            archive_format: 'zip',
         });
         var fs = require('fs');
-        fs.writeFileSync('${{github.workspace}}/cov.report.zip', Buffer.from(download.data));
+        fs.writeFileSync('${{github.workspace}}/${{inputs.cov_report}}.zip', Buffer.from(download.data));
 
   - name: unzip-report
     if: inputs.cov_mode == 'send-status'
