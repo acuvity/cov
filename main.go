@@ -37,6 +37,7 @@ func main() {
 			threshold := viper.GetFloat64("threshold")
 			filters := viper.GetStringSlice("filters")
 			hostURL := viper.GetString("host-url")
+			context := viper.GetString("context")
 			ignored := viper.GetStringSlice("ignore")
 			pipelineID := viper.GetString("pipeline-id")
 			provider := viper.GetString("provider")
@@ -56,9 +57,9 @@ func main() {
 			var statusChecker statuscheck.StatusChecker
 			switch provider {
 			case "github":
-				statusChecker = githubcheck.New(hostURL, targetURL)
+				statusChecker = githubcheck.New(context, hostURL, targetURL)
 			case "gitlab":
-				statusChecker = gitlabcheck.New(hostURL, targetURL, pipelineID)
+				statusChecker = gitlabcheck.New(context, hostURL, targetURL, pipelineID)
 			default:
 				return fmt.Errorf("unknown provider: %s", provider)
 			}
@@ -140,6 +141,7 @@ func main() {
 	rootCmd.Flags().StringSliceP("filter", "f", nil, "The filters to use for coverage lookup")
 	rootCmd.Flags().StringSliceP("ignore", "i", nil, "Define patterns to ignore matching files.")
 	rootCmd.Flags().StringP("provider", "p", "github", "The provider to use for status checks: github, gitlab")
+	rootCmd.Flags().StringP("context", "c", "coverage", "The contect to use to report status checks.")
 	rootCmd.Flags().BoolP("quiet", "q", false, "Do not print details, just the verdict")
 	rootCmd.Flags().IntP("threshold-exit-code", "e", 1, "Set the exit code on coverage threshold miss")
 

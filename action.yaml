@@ -19,6 +19,10 @@ inputs:
     description: The name of the coverage report to use.
     required: true
     default: coverage.report
+  cov_context:
+    description: The name of the context report to use.
+    required: true
+    default: coverage
   cov_threshold:
     description: Default required coverage percentage.
     default: "90"
@@ -52,6 +56,7 @@ runs:
       echo "* cov_threshold: ${{inputs.cov_threshold}}"
       echo "* cov_file: ${{inputs.cov_file}}"
       echo "* cov_report: ${{inputs.cov_report}}"
+      echo "* cov_context: ${{inputs.cov_context}}"
       echo "* head_ref: ${{github.head_ref}}"
       echo "* base_ref: ${{github.base_ref}}"
       echo "* sha: ${{github.sha}}"
@@ -88,6 +93,7 @@ runs:
           -e 0 \
           -t ${{inputs.cov_threshold}} \
           --report-path ${{inputs.cov_report}} \
+          --context ${{inputs.cov_context }} \
           ${{inputs.cov_file}}
 
   - uses: actions/upload-artifact@v4
@@ -102,32 +108,46 @@ runs:
     uses: actions/github-script@v7
     with:
       script: |
+
         var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
            owner: context.repo.owner,
            repo: context.repo.repo,
            run_id: ${{inputs.workflow_run_id}},
         });
-        var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
-          return artifact.name == "${{inputs.cov_report}}"
-        })[0];
-        var download = await github.rest.actions.downloadArtifact({
-           owner: context.repo.owner,
-           repo: context.repo.repo,
-           artifact_id: matchArtifact.id,
-           archive_format: 'zip',
-        });
-        var fs = require('fs');
-        fs.writeFileSync('${{github.workspace}}/${{inputs.cov_report}}.zip', Buffer.from(download.data));
+        var matchArtifacts = artifacts.data.artifacts.filter((artifact) => {
+            return artifact.name.endsWith('.report');
+          });
 
-  - name: unzip-report
+        console.log("Matched Artifacts:", matchArtifacts);
+        const fs = require('fs');
+        for (const matchArtifact of matchArtifacts) {
+          const download = await github.rest.actions.downloadArtifact({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            artifact_id: matchArtifact.id,
+            archive_format: 'zip',
+          });
+          fs.writeFileSync(
+            `${process.env.GITHUB_WORKSPACE}/${matchArtifact.name}.zip`,
+            Buffer.from(download.data)
+          );
+        }
+
+  - name: unzip-reports
     if: inputs.cov_mode == 'send-status'
     shell: bash
-    run: unzip ${{inputs.cov_report}}.zip
+    run: |
+      for f in *.zip; do
+        unzip ${f}.zip
+      done
 
   - name: upload-report
     if: inputs.cov_mode == 'send-status' || inputs.cov_mode == 'both'
     shell: bash
     run: |
-      /home/runner/go/bin/cov \
-        --send-repo "${{github.repository}}@${{inputs.workflow_head_sha}}" \
-        --send-token "${{github.token}}"
+      for report in *.report; do
+        /home/runner/go/bin/cov \
+          --report-path "${report}" \
+          --send-repo "${{github.repository}}@${{inputs.workflow_head_sha}}" \
+          --send-token "${{github.token}}"
+      done

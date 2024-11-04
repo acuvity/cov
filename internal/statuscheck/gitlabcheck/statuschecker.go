@@ -25,9 +25,10 @@ type gitlabStatusCheck struct {
 }
 
 // New returns a new statuc checker for GitLab.
-func New(hostURL string, targetURL string, pipelineID string) statuscheck.StatusChecker {
+func New(context string, hostURL string, targetURL string, pipelineID string) statuscheck.StatusChecker {
 
 	return &gitlabStatusCheck{
+		Context:    context,
 		PipelineID: pipelineID,
 		TargetURL:  targetURL,
 		hostURL:    hostURL,
@@ -52,7 +53,6 @@ func (s *gitlabStatusCheck) Send(reportPath string, target string, token string)
 // Write writes the reports file.
 func (s *gitlabStatusCheck) Write(path string, coverage float64, threshold float64) error {
 
-	s.Context = "cov"
 	s.Coverage = coverage
 	s.State = func() string {
 		if coverage >= threshold {
@@ -74,7 +74,6 @@ func (s *gitlabStatusCheck) Write(path string, coverage float64, threshold float
 // SendNoop sends the noop check.
 func (s *gitlabStatusCheck) WriteNoop(path string) error {
 
-	s.Context = "cov"
 	s.State = "success"
 	s.Description = "no change in any go files"
 

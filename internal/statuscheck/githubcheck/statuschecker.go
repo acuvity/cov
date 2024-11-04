@@ -21,9 +21,10 @@ type githubStatusCheck struct {
 }
 
 // New returns a new statuc checker for GitHub.
-func New(hostURL string, targetURL string) statuscheck.StatusChecker {
+func New(context string, hostURL string, targetURL string) statuscheck.StatusChecker {
 
 	return &githubStatusCheck{
+		Context:   context,
 		TargetURL: targetURL,
 		hostURL:   hostURL,
 	}
@@ -47,7 +48,6 @@ func (s *githubStatusCheck) Send(reportPath string, target string, token string)
 // Write writes the reports file.
 func (s *githubStatusCheck) Write(path string, coverage float64, threshold float64) error {
 
-	s.Context = "cov"
 	s.State = func() string {
 		if coverage >= threshold {
 			return "success"
@@ -68,7 +68,6 @@ func (s *githubStatusCheck) Write(path string, coverage float64, threshold float
 // SendNoop sends the noop check.
 func (s *githubStatusCheck) WriteNoop(path string) error {
 
-	s.Context = "cov"
 	s.State = "success"
 	s.Description = "no change in any go files"
 
