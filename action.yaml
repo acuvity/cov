@@ -138,7 +138,7 @@ runs:
     shell: bash
     run: |
       for f in *.zip; do
-        unzip ${f}.zip
+        unzip ${f}
       done
 
   - name: upload-report
