@@ -30,6 +30,11 @@ inputs:
     description: The version to use for cov.
     required: true
     default: ${{github.action_ref}}
+  target_url:
+    description: |
+      The link behind the Details of the status check. It defaults to the workflow
+      run, whose summary shows the coverage tree.
+    default: ${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}
   workflow_run_id:
     description: |
       In mode 'send-status', pass the workflow id that generated the cov report.
@@ -89,12 +94,27 @@ runs:
         fi
       fi
 
+      # cov prints the coverage tree on stderr. Keep it in a file, print it in
+      # the log as before, and add it to the summary of the run: the Details of
+      # the status check (target_url) open that page.
+      EXIT=0
       /home/runner/go/bin/cov $BRANCH_ARG \
           -e 0 \
           -t ${{inputs.cov_threshold}} \
           --report-path ${{inputs.cov_report}} \
           --context ${{inputs.cov_context }} \
-          ${{inputs.cov_file}}
+          --target-url "${{inputs.target_url}}" \
+          ${{inputs.cov_file}} 2> cov-tree.txt || EXIT=$?
+      cat cov-tree.txt >&2
+
+      {
+        echo "### ${{inputs.cov_context}}"
+        echo '```'
+        cat cov-tree.txt
+        echo '```'
+      } >> "$GITHUB_STEP_SUMMARY"
+
+      exit "$EXIT"
 
   - uses: actions/upload-artifact@v4
     if: inputs.cov_mode == 'coverage'
